@@ -1,6 +1,9 @@
 ﻿#include<iostream>
+#include<fstream>
 #include<string>
 #include<ctime>
+#include<iomanip>
+using namespace std;
 using std::cin;
 using std::cout;
 using std::endl;
@@ -45,18 +48,41 @@ public:
 		set_age(age);
 		cout << "HConstructor:\t" << this << endl;
 	}
-	~Human()
+	virtual ~Human()
 	{
 		cout << "HDestructor:\t" << this << endl;
 	}
 
 	//			Methods:
-	void print()const
+	virtual std::ostream& print(std::ostream& os)const
 	{
-		cout << last_name << " " << first_name << " " << age << endl;
+		
+		return os
+			<< std::setw(15) << std::left << last_name
+			<< std::setw(10) << std::left << first_name
+			<< std::setw(5) << std::right << age;
+	}
+
+	virtual std::ofstream& print(std::ofstream& os)const
+	{
+		
+		//return 
+			os
+			<< std::setw(15) << std::left << last_name<<","
+			<< std::setw(10) << std::left << first_name<<","
+			<< std::setw(5) << std::right << age;
+			return os;
 	}
 };
+std::ostream& operator<<(std::ostream& os, const Human& obj)
+{
+	return obj.print(os);
+}
 
+std::ofstream& operator<<(std::ofstream& os, const Human& obj)
+{
+	return obj.print(os);
+}
 
 #define STUDENT_TAKE_PARAMETERS	const std::string& speciality, const std::string& group, double rating, double attendance
 #define STUDENT_GIVE_PARAMETERS speciality, group, rating, attendance
@@ -114,10 +140,25 @@ public:
 	}
 
 	//					Methods
-	void print()const
+	std::ostream& print(std::ostream& os)const
 	{
-		Human::print();
-		cout << speciality + " " + group << " " << rating << " " << attendance << endl;
+		//return Human::print(os) << " " << speciality + " " + group << " " << rating << " " << attendance;
+		return Human::print(os) << " "
+			<< std::setw(25) << std::left << speciality
+			<< std::setw(10) << std::left << group
+			<< std::setw(5) << std::right << rating
+			<< std::setw(5) << std::right << attendance;
+	}
+	
+	std::ofstream& print(std::ofstream& os)const
+	{
+		//return Human::print(os) << " " << speciality + " " + group << " " << rating << " " << attendance;
+		Human::print(os) << ","
+			<< std::setw(25) << std::left << speciality<<","
+			<< std::setw(10) << std::left << group<<","
+			<< std::setw(5) << std::right << rating<<","
+			<< std::setw(5) << std::right << attendance;
+		return os;
 	}
 };
 
@@ -156,10 +197,21 @@ public:
 		cout << "TDestructor:\t" << this << endl;
 	}
 	//					Methods
-	void print()const
+	std::ostream& print(std::ostream& os)const
 	{
-		Human::print();
-		cout << speciality << " " << experience << endl;
+		//return Human::print(os) << " " << speciality << " " << experience;
+		return Human::print(os) << " "
+			<< std::setw(35) << std::left << speciality
+			<< std::setw(5) << std::right << experience;
+	}
+	
+	std::ofstream& print(std::ofstream& os)const
+	{
+		//return Human::print(os) << " " << speciality << " " << experience;
+		Human::print(os) << ","
+			<< std::setw(35) << std::left << speciality<<","
+			<< std::setw(5) << std::right << experience;
+		return os;
 	}
 };
 
@@ -186,16 +238,24 @@ public:
 		cout << "GDestructor:\t" << this << endl;
 	}
 	//						Methods:
-	void print()const
+	std::ostream& print(std::ostream& os)const
 	{
-		Student::print();
-		cout << subject << endl;
+		return Student::print(os) << " " << subject;
+	}
+	
+	std::ofstream& print(std::ofstream& os)const
+	{
+		Student::print(os) << "," << subject;
+		return os;
 	}
 };
+
+//#define INHERITANCE_CHECK
 
 void main()
 {
 	setlocale(LC_ALL, "");
+#ifdef INHERITANCE_CHECK
 	Human hm("Òóïåíêî", "Âàñèëèé", 18);
 	hm.print();
 	Student st("Pinkman", "Jessie", 28, "Chemistry", "WW_01", 90, 85);
@@ -204,4 +264,42 @@ void main()
 	t.print();
 	Graduate gr("Shrader", "Hank", 40, "Criminalistic", "OBN", 90, 90, "How to catch Heisenberg");
 	gr.print();
+#endif // INHERITANCE_CHECK
+
+	//Generalisation (Îáîáùåíèå):
+	Human* group[] =
+	{
+		new Student("Pinkman", "Jessie", 25, "Chemistry", "WW_011", 90, 80),
+		new Student("Vercetti", "Tomas", 30, "City business", "Vice", 88, 90),
+		new Teacher("White", "Walter", 50, "Chemistry", 20),
+		new Student("Diaz", "Ricardo", 55, "Weapons distribution", "Vice", 91, 80),
+		new Graduate("Shrader", "Hank", 40, "Criminalistics", "OBN", 85, 90, "How to catch Heisenberg"),
+		new Teacher("Einsten", "Albert", 142, "Astronomy", 110)
+	};
+	cout << sizeof(group) / sizeof(group[0]) << endl;
+	cout << "\n-----------------------------------\n";
+	//Specialisation:
+	for (int i = 0; i < sizeof(group) / sizeof(Human*); i++)
+	{
+		//group[i]->print();
+		cout << *group[i] << endl;
+	}
+	cout << "\n-----------------------------------\n";
+
+	std::ofstream fout("group.txt");
+	for (int i = 0; i < sizeof(group) / sizeof(Human*); i++)
+	{
+		//group[i]->print();
+		fout << typeid(*group[i]).name() << ":\t";
+		fout << *group[i] << ";" << endl;
+	}
+	fout.close();
+
+	system("start notepad group.txt");
+
+	for (int i = 0; i < sizeof(group) / sizeof(group[0]); i++)
+	{
+		delete group[i];
+	}
+
 }
