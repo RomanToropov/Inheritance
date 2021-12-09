@@ -14,7 +14,7 @@ class Human
 {
 	std::string last_name;
 	std::string first_name;
-	unsigned int age;
+	unsigned int age;//http://cplusplus.com/reference/ctime/
 public:
 	const std::string& get_last_name()const
 	{
@@ -56,32 +56,53 @@ public:
 	//			Methods:
 	virtual std::ostream& print(std::ostream& os)const
 	{
-		
+		//return os << last_name << " " << first_name << " " << age;
+		/*os.width(15);	//Çàäàåò øèðèíó âûâîäèìîãî ïîëÿ
+		os << std::left;//Çàäàåò âûðàâíèâàíèå âûâîäèìîãî ïîëÿ
+		os << last_name;
+		os.width(10);
+		os << std::left;
+		os << first_name;
+		os.width(5);
+		os << std::right;
+		os << age;
+		return os;*/
 		return os
+			//#include<iomanip>
 			<< std::setw(15) << std::left << last_name
 			<< std::setw(10) << std::left << first_name
 			<< std::setw(5) << std::right << age;
 	}
-
 	virtual std::ofstream& print(std::ofstream& os)const
 	{
-		
 		//return 
-			os
-			<< std::setw(15) << std::left << last_name<<","
-			<< std::setw(10) << std::left << first_name<<","
+		os
+			<< std::setw(15) << std::left << last_name + ","
+			<< std::setw(10) << std::left << first_name + ","
 			<< std::setw(5) << std::right << age;
-			return os;
+		return os;
+	}
+	virtual std::ifstream& input(std::ifstream& is)
+	{
+		std::getline(is, last_name, ',');
+		std::getline(is, first_name, ',');
+		std::string age_buffer;
+		std::getline(is, age_buffer, ',');
+		age = std::stoi(age_buffer);
+		return is;
 	}
 };
 std::ostream& operator<<(std::ostream& os, const Human& obj)
 {
 	return obj.print(os);
 }
-
 std::ofstream& operator<<(std::ofstream& os, const Human& obj)
 {
 	return obj.print(os);
+}
+std::ifstream& operator>>(std::ifstream& is, Human& obj)
+{
+	return obj.input(is);
 }
 
 #define STUDENT_TAKE_PARAMETERS	const std::string& speciality, const std::string& group, double rating, double attendance
@@ -149,16 +170,25 @@ public:
 			<< std::setw(5) << std::right << rating
 			<< std::setw(5) << std::right << attendance;
 	}
-	
 	std::ofstream& print(std::ofstream& os)const
 	{
 		//return Human::print(os) << " " << speciality + " " + group << " " << rating << " " << attendance;
 		Human::print(os) << ","
-			<< std::setw(25) << std::left << speciality<<","
-			<< std::setw(10) << std::left << group<<","
-			<< std::setw(5) << std::right << rating<<","
+			<< std::setw(25) << std::left << speciality + ","
+			<< std::setw(10) << std::left << group + ","
+			<< std::setw(5) << std::right << rating << ","
 			<< std::setw(5) << std::right << attendance;
 		return os;
+	}
+	std::ifstream& input(std::ifstream& is)
+	{
+		Human::input(is);
+		std::getline(is, speciality, ',');
+		std::getline(is, group, ',');
+		is >> rating;
+		is.ignore();
+		is >> attendance;
+		return is;
 	}
 };
 
@@ -204,14 +234,20 @@ public:
 			<< std::setw(35) << std::left << speciality
 			<< std::setw(5) << std::right << experience;
 	}
-	
 	std::ofstream& print(std::ofstream& os)const
 	{
 		//return Human::print(os) << " " << speciality << " " << experience;
 		Human::print(os) << ","
-			<< std::setw(35) << std::left << speciality<<","
+			<< std::setw(35) << std::left << speciality + ","
 			<< std::setw(5) << std::right << experience;
 		return os;
+	}
+	std::ifstream& input(std::ifstream& is)
+	{
+		Human::input(is);
+		std::getline(is, speciality, ',');
+		is >> experience;
+		return is;
 	}
 };
 
@@ -242,15 +278,37 @@ public:
 	{
 		return Student::print(os) << " " << subject;
 	}
-	
 	std::ofstream& print(std::ofstream& os)const
 	{
 		Student::print(os) << "," << subject;
 		return os;
 	}
+	std::ifstream& input(std::ifstream& is)
+	{
+		Student::input(is);
+		std::getline(is, subject, ';');
+		return is;
+	}
 };
 
+Human* HumanFactory(const std::string& type)
+{
+	if (type.find("class Student") != std::string::npos)
+	{
+		return new Student("last_name", "first_name", 0, "specs", "group", 0, 0);
+	}
+	if (type.find("class Graduate") != std::string::npos)
+	{
+		return new Graduate("last_name", "first_name", 0, "specs", "group", 0, 0, "subject");
+	}
+	if (type.find("class Teacher") != std::string::npos)
+	{
+		return new Teacher("last_name", "first_name", 0, "specs", 0);
+	}
+}
+
 //#define INHERITANCE_CHECK
+//#define SAVE_TO_FILE
 
 void main()
 {
@@ -266,6 +324,7 @@ void main()
 	gr.print();
 #endif // INHERITANCE_CHECK
 
+#ifdef SAVE_TO_FILE
 	//Generalisation (Îáîáùåíèå):
 	Human* group[] =
 	{
@@ -301,5 +360,56 @@ void main()
 	{
 		delete group[i];
 	}
+#endif // SAVE_TO_FILE
 
+	std::ifstream fin("group.txt");
+
+	size_t size = 0;
+	Human** group = nullptr;
+
+	if (fin.is_open())
+	{
+		//1) Ñ÷èòàåì êîëè÷åñòâî ñòðîê â ôàéëå, ÷òîáû âûäåëèòü ïàìÿòü äëÿ ãðóïïû: 
+		std::string buffer;
+		for (size = 0; !fin.eof(); size++)
+		{
+			std::getline(fin, buffer, ';');
+		}
+		cout << "Ðàçìåð ãðóïïû: " << size << endl;
+		cout << "Ïîçèöèÿ: " << fin.tellg() << endl;
+		//2) Âûäåëÿåì ïàìÿòü äëÿ ãðóïïû:
+		group = new Human * [--size]{};
+		//3) Âîçâðàùàåìñÿ â íà÷àëî ôàéëà äëÿ òîãî ÷òîáû óæå ïðî÷èòàòü ñòðîêè è çàãðóçèòü èõ â ìàññèâ:
+		fin.clear();
+		fin.seekg(0);
+		cout << "Ïîçèöèÿ: " << fin.tellg() << endl;
+		//4) Çàíîâî ÷èòàåì ôàéë, è ñîõðàíÿåì åãî ñòðîêè â îáúåêòû:
+		for (int i = 0; i < size; i++)
+		{
+			std::getline(fin, buffer, '\t');
+			group[i] = HumanFactory(buffer);
+			fin >> *group[i];
+			cout << *group[i] << endl;
+		}
+		fin.close();
+	}
+	else
+	{
+		std::cerr << "Error: file not found :-(\n";
+	}
+
+	cout << "\n-----------------------------------\n";
+	//Specialisation:
+	for (int i = 0; i < size; i++)
+	{
+		//group[i]->print();
+		cout << *group[i] << endl;
+	}
+	cout << "\n-----------------------------------\n";
+
+	for (int i = 0; i < size; i++)
+	{
+		delete group[i];
+	}
+	delete[] group;
 }
